@@ -1,10 +1,10 @@
 # Camera3DScanner
-##### Maciej Dąbroś, Dawid Suder
-Engineering project
+### Praca inżynierska
+### Maciej Dąbroś, Dawid Suder
 
-Branch MASTER:
-	Tu zawsze znajduje się jedynie działający kod i aktualne dokumenty. Aktualizowany co jakiś czas.
+#####Branch MASTER:
+Tu zawsze znajduje się jedynie działający kod i aktualne dokumenty. Aktualizowany co jakiś czas.
 
-Branch DEVELOP:
-	To główny branch deweloperski, który zawiera aktualny postęp prac. Tutaj trzymany jest "świeży" kod.
+#####Branch DEVELOP:
+To główny branch deweloperski, który zawiera aktualny postęp prac. Tutaj trzymany jest "świeży" kod.
 
