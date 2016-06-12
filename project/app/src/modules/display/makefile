@@ -1,4 +1,5 @@
-flags= -std=c++11 -I ../../lib
+flags= -std=c++11 -I ../../lib -I ../../modules/communication -I ../../modules/core -I ../../modules/core/computation -I ../../modules/core/image_analysis -I ../../modules/display -I ../../modules/persistance
+
 post_flags= -pthread
 
 all: *.cpp *.hpp

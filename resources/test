@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SIZE=9
+for i in `seq 1 $SIZE`;
+do
+    for j in `seq 1 $SIZE`;
+	do
+		for k in `seq 1 $SIZE`;
+		do
+			echo $i $j $k
+		done  
+	done  
+done   
