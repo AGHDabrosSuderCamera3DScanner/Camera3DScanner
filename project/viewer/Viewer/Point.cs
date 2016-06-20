@@ -16,21 +16,6 @@ namespace Viewer
         public float g = 1;
         public float b = 1;
 
-        public Point(String stringformatPoint)
-        {
-            string[] xyz = stringformatPoint.Split(',');
-            try
-            {
-                this.x = float.Parse(xyz[0]);
-                this.y = float.Parse(xyz[1]);
-                this.z = float.Parse(xyz[2]);
-            }
-            catch
-            {
-                throw new FormatException();
-            }
-        }
-
         public Point(float x, float y, float z)
         {
             this.x = x; this.y = y; this.z = z;
@@ -48,6 +33,11 @@ namespace Viewer
         public void setColor(float r, float g, float b)
         {
             this.r = r; this.g = g; this.b = b;
+        }
+
+        public override string ToString()
+        {
+            return "Point " + x + " " + y + " " + z;
         }
     }
 }

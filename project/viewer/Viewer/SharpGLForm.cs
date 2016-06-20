@@ -40,19 +40,15 @@ namespace Viewer
             //  Load the identity matrix.
             gl.LoadIdentity();
 
+            gl.Rotate(rotation, 0, 1, 0);
+
             foreach (Point p in points)
             {
                 p.draw(gl);
             }
 
-            gl.MatrixMode(OpenGL.GL_PROJECTION);
-
-            gl.Rotate(0, 1, 0);
-
-            gl.MatrixMode(OpenGL.GL_MODELVIEW);
-
             //  Nudge the rotation.
-            //rotation += 5.0f;
+            rotation += 5.0f;
         }
 
 
@@ -87,15 +83,15 @@ namespace Viewer
 
             //  Set the projection matrix.
             gl.MatrixMode(OpenGL.GL_PROJECTION);
-
+           
             //  Load the identity.
             gl.LoadIdentity();
 
             //  Create a perspective transformation.
-            gl.Perspective(60.0f, (double)Width / (double)Height, 0.01, 100.0);
+            gl.Perspective(60.0f, (double)Width / (double)Height, 0.01, 120.0);
 
             //  Use the 'look at' helper function to position and aim the camera.
-            gl.LookAt(-5, 5, -5, 0, 0, 0, 0, 1, 0);
+            gl.LookAt(0, 0, -100, 0, 0, 0, 0, 1, 0);
 
             //  Set the modelview matrix.
             gl.MatrixMode(OpenGL.GL_MODELVIEW);

@@ -24,26 +24,7 @@ namespace Viewer
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             
-            Application.Run(new SharpGLForm(readFileForPoints()));
-        }
-
-        private static Point[] readFileForPoints()
-        {
-            Point[] points = null;
-            try
-            {
-                string[] pointsString = System.IO.File.ReadAllLines(@filepath);
-                points = new Point[pointsString.Length];
-                for (int i = 0; i < pointsString.Length; i++)
-                {
-                    points[i] = new Point(pointsString[i]);
-                }
-            }
-            catch
-            {
-                Environment.Exit(-1);
-            }
-            return points;
+            Application.Run(new SharpGLForm(PointLoader.loadFromFile(filepath)));
         }
     }
 }
