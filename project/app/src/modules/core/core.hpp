@@ -3,30 +3,33 @@
 
 #include "common.hpp"
 
-namespace CORE
-{
-	class ProcessedBitmap16
-	{
-		public:
-			ProcessedBitmap16();
-			ProcessedBitmap16( UINT16 * bitmap,
-								size_t sizeX,
-								size_t sizeY );
-			~ProcessedBitmap16();
-			void release();
-			bool isValid();
-
-		public:
-			UINT16 * m_bitmap;
-			size_t m_sizeX;
-			size_t m_sizeY;
-	};
-}
-
 #include "core_image_analysis.hpp"
 #include "core_computation.hpp"
 
+namespace CORE
+{
+    class Core
+    {
+        public:
+            Core();
+            ~Core();
+            COMMON::STATUS Init16( COMMON::PCube16& pCube16 );
+            COMMON::STATUS ProvideBitmap16( COMMON::PBitmap16& pBitmap16, double angle );
+            COMMON::STATUS Start16( COMMON::callback_t callback );
+            void ReleaseBitmap16();
+            void Destroy16();
 
+        private:
+            CORE::ImageAnalysis     m_imageAnalysis;
+            CORE::Computation       m_computation;
+            COMMON::PCube16         m_cube16;
+            COMMON::PBitmap16       m_bitmap16;
+            bool                    m_initialized16;
+            bool                    m_bitmap16Provided;
+            double                  m_angle16;
+
+    };
+}
 
 
 #endif // CORE_HPP

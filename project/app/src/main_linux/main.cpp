@@ -2,28 +2,19 @@
 #include "core.hpp"
 #include <string>
 #include <string.h>
-#include <cmath>
 #include <cstdlib>
-
-#define SIZE          128
-#define SIZE_2        SIZE/2
-#define L             ( SIZE * 5 )
-#define D             ( L - SIZE )
-#define SHIFT(q)      ( (q) - ( SIZE_2 ) )
-#define PI            3.14159265359
-#define COUNT         32
-#define ALPHA(q)      RAD( ( 360.0 * ( q ) ) / COUNT )
-#define RAD(q)        ( PI * ( q ) / 180.0 )
-#define SCREEN        ( ( ( L * L * SIZE ) / ( 2.0 * L - SIZE ) ) / static_cast<double>( sqrt( L * L - pow( ( L * SIZE ) / ( 2.0 * L - SIZE ) , 2 ) ) ) )
-
+#include <cmath>
+#include <vector>
 
 using namespace COMMON;
 
-int count = 0;
+long long COUNT = 0;    // number of bitmaps per full object rotation
+long long TRUE_COUNT = 0;
+
 
 /******************************************************************************/
 
-bool isInCircle( unsigned int x, unsigned int y )
+bool isInCircle( UINT x, UINT y )
 {
 	x -= SIZE / 2;
 	y -= SIZE / 2;
@@ -38,9 +29,9 @@ bool isInCircle( unsigned int x, unsigned int y )
 
 /******************************************************************************/
 
-void generateCircle( UINT16 * table, size_t size )
+void generateCircle( BITMAP16_INNER_TYPE * table, size_t size )
 {
-	if( table == NULL || size <= 0 )
+	if( table == nullptr || size <= 0 )
 	{
 		return;
 	}
@@ -63,9 +54,97 @@ void generateCircle( UINT16 * table, size_t size )
 
 /******************************************************************************/
 
-void printTable2D( UINT16 * table, size_t sizeX, size_t sizeY )
+bool isInOrb( UINT x, UINT y, UINT z )
 {
-	if( table == NULL || sizeX <= 0 || sizeY <= 0 )
+	x -= SIZE / 2;
+	y -= SIZE / 2;
+	z -= SIZE / 2;
+	x *= x;
+	y *= y;
+	z *= z;
+
+	if( x + y + z <= ( SIZE / 2 ) * ( SIZE / 2 ) )
+		return true;
+
+   // DEBUG("fAIL");
+	return false;
+}
+
+/******************************************************************************/
+
+void generateOrb( CUBE16_INNER_TYPE * table, size_t size )
+{
+	if( table == nullptr || size <= 0 )
+	{
+		return;
+	}
+
+	UINT i, j, k;
+
+	for( i = 0; i < size; i++ )
+	{
+		for( j = 0; j < size; j++ )
+		{
+		    for( k = 0; k < size; k++ )
+		    {
+                if( isInOrb( i, j, k ) )
+                    TABLE3D( table, i, j, k, size, size ) = 1;
+                else
+                    TABLE3D( table, i, j, k, size, size ) = 0;
+		    }
+		}
+	}
+
+	return;
+}
+
+/******************************************************************************/
+
+bool isInElipse( UINT x, UINT y, UINT a, UINT b )
+{
+	x -= SIZE / 2;
+	y -= SIZE / 2;
+	x *= x;
+	y *= y;
+	a *= a;
+	b *= b;
+
+	if( b * x + a * y <= a * b )
+		return true;
+
+	return false;
+}
+
+/******************************************************************************/
+
+void generateElipse( BITMAP16_INNER_TYPE * table, size_t size, UINT a, UINT b )
+{
+	if( table == nullptr || size <= 0 )
+	{
+		return;
+	}
+
+	unsigned int i, j;
+
+	for( i = 0; i < size; i++ )
+	{
+		for( j = 0; j < size; j++ )
+		{
+			if( isInElipse( i, j, a, b ) )
+				TABLE2D( table, i, j, size ) = RGB16( 100, 100, 100 );
+			else
+				TABLE2D( table, i, j, size ) = RGB16( 255, 255, 255 );
+		}
+	}
+
+	return;
+}
+
+/******************************************************************************/
+
+void printTable2D( BITMAP16_INNER_TYPE * table, size_t sizeX, size_t sizeY )
+{
+	if( table == nullptr || sizeX <= 0 || sizeY <= 0 )
 	{
 		return;
 	}
@@ -87,9 +166,11 @@ void printTable2D( UINT16 * table, size_t sizeX, size_t sizeY )
 
 /******************************************************************************/
 
-void printTable3D( UINT16 * table, size_t sizeX, size_t sizeY, size_t sizeZ )
+void printTable3D( CUBE16_INNER_TYPE * table, size_t sizeX, size_t sizeY, size_t sizeZ )
 {
-	if( table == NULL || sizeX <= 0 || sizeY <= 0 || sizeZ <= 0 )
+    //DEBUG("kiełbasa");
+
+	if( table == nullptr || sizeX <= 0 || sizeY <= 0 || sizeZ <= 0 )
 	{
 		return;
 	}
@@ -102,7 +183,8 @@ void printTable3D( UINT16 * table, size_t sizeX, size_t sizeY, size_t sizeZ )
 		{
 			for( k = 0; k < sizeZ; k++ )
 			{
-				if( TABLE3D( table, i, j, k, sizeY, sizeZ ) == count )
+			    //DEBUG_INT(TABLE3D( table, i, j, k, sizeY, sizeZ ));
+				if( TABLE3D( table, i, j, k, sizeY, sizeZ ) == TRUE_COUNT )
 					//fprintf( stdout, "%d,%d,%d%c%c", i, j, k, 13, 10 );
 					fprintf( stdout, "%d %d %d\n", i, j, k );
 			}
@@ -114,117 +196,160 @@ void printTable3D( UINT16 * table, size_t sizeX, size_t sizeY, size_t sizeZ )
 
 /******************************************************************************/
 
+bool loadBitmap24FromFile( const char* path, BITMAP16_INNER_TYPE * table, size_t size )
+{
+	struct _BMPHeader
+	{
+		UINT16 type;
+		UINT32 size;
+		UINT16 reserved1;
+		UINT16 reserved2;
+		UINT32 offset;	// offset of pixel table in file
+	} __attribute__((packed)) BMPHeader;
+	
+	FILE * pFile;
+	UINT32 dwSize;
+	
+
+	pFile = fopen( path, "rb" );
+  	if( pFile == nullptr )
+	{
+		raise_error( "loadBitmap24FromFile : Cannot open file" );
+		return false;
+	}
+
+    fseek( pFile, 0, SEEK_END );
+	dwSize = ftell( pFile );
+	fseek( pFile, 0, SEEK_SET );
+
+	if( dwSize < 14 )
+	{
+		raise_error( "loadBitmap24FromFile : File does not contain header" );
+		return false;
+	}
+
+	if( fread( &BMPHeader, 1, SIZEOF( _BMPHeader ), pFile ) < SIZEOF( _BMPHeader ) )
+	{
+		raise_error( "loadBitmap24FromFile : Cannot read header from file" );
+		return false;
+	}
+
+	UINT32 BitmapSize = BMPHeader.size - BMPHeader.offset;
+
+	if( ( BitmapSize ) > 3 * size )
+	{
+		raise_error( "loadBitmap24FromFile : Provided buffer is too small" );
+		return false;
+	}
+
+	struct Bitmap24InnerType
+	{
+		UINT8 blue;
+		UINT8 green;
+		UINT8 red;
+	} *buffer;
+
+	buffer = new Bitmap24InnerType[ BitmapSize / 3 ];
+	if( buffer == nullptr )
+	{
+		raise_error( "loadBitmap24FromFile : Cannot allocate memory for bitmap" );
+		return false;
+	}
+
+	fseek( pFile, BMPHeader.offset, SEEK_SET );
+	if( fread( buffer, 1, BitmapSize, pFile ) < BitmapSize )
+	{
+		raise_error( "loadBitmap24FromFile : Cannot load pixel table" );
+		return false;
+	}
+
+	// bitmap is inverted ( lines are written from bottom to top )
+	for( UINT i = 0; i < BitmapSize / 3; i++ )
+	{
+		TABLE2D( table, ( i % SIZE ), ( SIZE - 1 - ( i / SIZE ) ) , SIZE ) = RGB16( buffer[i].red, buffer[i].green, buffer[i].blue );
+	}
+
+	delete [] buffer;
+    fclose( pFile );
+
+	return true;
+}
+
+/******************************************************************************/
+
+#define ALPHA(q)    RAD( ( 360.0 * ( q ) ) / COUNT )
+#define RAD(q)      ( PI * ( q ) / 180.0 )
+
 int main( int argc, char * argv[] )
 {
-	UINT16 * table2D = new UINT16[SIZE * SIZE];
-	UINT16 * table3D = new UINT16[SIZE * SIZE * SIZE];
-
-	memset( table2D, 0, SIZE * SIZE * sizeof( UINT16 ) );
-	memset( table3D, 0, SIZE * SIZE * SIZE * sizeof( UINT16 ) );
-
-
-	generateCircle( table2D, SIZE );
-	//printTable2D( table2D, SIZE, SIZE );
-	//printf( "\n" );
-
-	CORE::ImageAnalysis imageAnalysis;
-	CORE::ProcessedBitmap16 * processedBitmap16 = NULL;
-
-	imageAnalysis.provideBitmap16( table2D, SIZE, SIZE );
-
-	if( imageAnalysis.isBitmap16Valid() )
+	
+    if( argc < 2 || sscanf( argv[1], "%d", &COUNT ) < 1 || COUNT <= 0 )
+    {
+        raise_error( "main(): Invalid COUNT provided" );
+    }
+    TRUE_COUNT = COUNT;
+	
+	std::vector<PBitmap16> tables2D;
+	char buffer[256];
+	
+	for( UINT i = 0; i < COUNT; i++ )
 	{
-		processedBitmap16 = imageAnalysis.processBitmap16();
-
-		if( processedBitmap16 == NULL )
+		tables2D.emplace_back( new Bitmap16( PInnerBitmap16( new BITMAP16 ), SIZE, SIZE ) );
+		memset( tables2D[i]->m_bitmap.get(), 0, BITMAP16_SIZE );
+		sprintf( buffer, "./../resources/input/%u.bmp", i+1 );
+		DEBUG(buffer)
+		if( !loadBitmap24FromFile( buffer, tables2D[i]->m_bitmap.get(), BITMAP16_SIZE ) )
 		{
-			raise_error( "Processed bitmap16 is null" );
-		}
-		else
-		{
-			if( processedBitmap16->isValid() )
-			{
-				//printTable2D( processedBitmap16->m_bitmap, processedBitmap16->m_sizeX, processedBitmap16->m_sizeY );
-			}
-			else
-			{
-				raise_error( "Processed bitmap16 is not valid" );
-			}
+			raise_error( "MAIN : Cannot load bitmap from file" );
 		}
 	}
 
+	PCube16     table3D( new Cube16( PInnerCube16( new CUBE16 ), SIZE, SIZE, SIZE ) );  // 3D mesh
+	CORE::Core  core;
 
-	int x0, y0, x, y, z;
-	int angle;
+	memset( table3D->m_cube.get(), 0, CUBE16_SIZE );
 
-#define beta ( ALPHA( angle ) )
+	//generateCircle( table2D->m_bitmap.get(), SIZE );
+	//generateOrb( table3D->m_cube.get(), SIZE );
+	//generateElipse( table2D->m_bitmap.get(), SIZE, SIZE / 8, SIZE/2 );
 
-#define COS(q) fabs(cos( q ))
-#define SIN(q) fabs(sin( q ))
-#define TAN(q) fabs(tan( q ))
+	//printTable2D( table2D->m_bitmap.get(), SIZE, SIZE );
 
-	for( angle = 0; angle < COUNT ; angle++ )
-	{
-	    if(COS(beta) > 0.0001)
-	    {
-	        count++;
-            for( x = 0; x < SIZE; x++ )
-            {
-                for( y = 0; y < SIZE; y++ )
-                {
-                    for( z = 0; z < SIZE; z++ )
-                    {
+    COMMON::STATUS result = core.Init16( table3D );
+    if( result != COMMON::STATUS::OK )
+    {
+        raise_error( "Core->Init16: " + print_status( result ) );
+    }
 
-#define h ( abs( SHIFT( x ) ) )
-#define g ( h * TAN( beta ) )
-#define f ( h / COS( beta ) )
-#define j ( fabs( SIZE_2 - z ) - g )
-#define e ( j * SIN( beta ) )
-#define c ( j * COS( beta ) )
-#define b ( fabs( SIZE_2 - c ) )
-#define a ( D )
+    for( int angle = 0; angle < COUNT; angle++ )
+    {
+        if( fabs( cos( angle ) ) < MIN_COS )
+        {
+            TRUE_COUNT--;
+            continue;
+        }
 
-                        //x0 = ( L * SHIFT( x ) ) / ( D + z ); // bez kąta
-                        x0 = static_cast<int>( L * ( e + f ) / ( a + b ) );
-                        x0 = static_cast<double>(x0) * SIZE  / SCREEN;
-                        x0 += SIZE / 2;
+        result = core.ProvideBitmap16( tables2D[angle], ALPHA( angle ) );
+        if( result != COMMON::STATUS::OK )
+        {
+            raise_error( "Core->ProvideBitmap16: " + print_status( result ) );
+        }
 
-                        //y0 = ( L * SHIFT( y ) ) / ( D + z ); // bez kąta
-                        #define result ( abs( SIZE_2 - static_cast<double>(z) ) * COS( beta ) + abs( SHIFT( x ) ) * SIN( beta ) + SIZE_2 )
-                        y0 = static_cast<int>( abs( SHIFT( y ) ) * static_cast<double>(L) / ( L - result ) ) ;
-                        y0 = y0 * SIZE / SCREEN;
-                        y0 += SIZE / 2;
+        result = core.Start16( nullptr );
+        if( result != COMMON::STATUS::OK )
+        {
+           raise_error( "Core->Start16: " + print_status( result ) );
+        }
 
-                        if( x0 < SIZE && x0 >= 0 && y0 < SIZE && y0 >= 0 )
-                        {
-                            if( VALUE16( TABLE2D( processedBitmap16->m_bitmap, x0, y0, SIZE ) ) == 0 )
-                            {
+        core.ReleaseBitmap16();
+    }
 
-                                TABLE3D( table3D, x, y, z, SIZE, SIZE ) += 1 ;
-                            }
-                            else
-                            {
-                                 //DEBUG_INT( VALUE16( TABLE2D( processedBitmap16->m_bitmap, x0, y0, SIZE ) ) )
-                            }
-                        }
-                        else
-                        {
-                            //DEBUG( std::string( std::to_string( x0 ) + " : " + std::to_string( y0 ) ).c_str() );
-                        }
-                    }
-                }
-            }
-	    }
+	printTable3D( table3D->m_cube.get(), SIZE, SIZE, SIZE );
 
-		//DEBUG( std::to_string( ALPHA( angle ) ).c_str() );
-	}
+    core.Destroy16();
 
-	printTable3D( table3D, SIZE, SIZE, SIZE );
-
-
-	processedBitmap16->release();
-	delete [] table3D;
-	delete [] table2D;
+	table3D.reset();
+	tables2D.clear();
 
 	return 0;
 }

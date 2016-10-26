@@ -1,4 +1,4 @@
-flags= -Wall -std=c++11
+flags= -O3 -flto -Wall -std=c++11
 
 post_flags= -pthread
 

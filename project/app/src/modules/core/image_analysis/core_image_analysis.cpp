@@ -1,96 +1,51 @@
 #include "core_image_analysis.hpp"
 
+using namespace COMMON;
+
 /******************************************************************************/
 
 CORE::ImageAnalysis::ImageAnalysis()
 {
-	m_bitmap16 = NULL;
-	m_sizeX16 = 0;
-	m_sizeY16 = 0;
 }
 
 /******************************************************************************/
 
 CORE::ImageAnalysis::~ImageAnalysis()
 {
-	releaseBitmap16();
 }
 
 /******************************************************************************/
 
-bool CORE::ImageAnalysis::provideBitmap16( UINT16 * bitmap, size_t sizeX, size_t sizeY )
+PBitmap16 CORE::ImageAnalysis::processBitmap16( PBitmap16& pBitmap )
 {
-	if( bitmap != NULL && sizeX > 0 && sizeY > 0 )
+	if( !pBitmap || !pBitmap->isValid() )
 	{
-		releaseBitmap16();  // release previous bitmap to prevent memory leaks
-
-		m_bitmap16 = bitmap;
-		m_sizeX16 = sizeX;
-		m_sizeY16 = sizeY;
-
-		return true;
+		return PBitmap16( nullptr );
 	}
 
-	return false;
-}
+	BITMAP16_INNER_TYPE * rawBitmap16 = pBitmap->m_bitmap.get();
+    size_t sizeX16 = pBitmap->m_sizeX;
+	size_t sizeY16 = pBitmap->m_sizeY;
+    BITMAP16_INNER_TYPE * bitmap16 = new BITMAP16_INNER_TYPE[ sizeX16 * sizeY16 * SIZEOF(BITMAP16_INNER_TYPE) ];
 
-/******************************************************************************/
-
-CORE::ProcessedBitmap16 * CORE::ImageAnalysis::processBitmap16()
-{
-	if( !isBitmap16Valid() )
+	for( size_t i = 0; i < sizeX16; i++ )
 	{
-		return NULL;
-	}
-
-	CORE::ProcessedBitmap16 * processedBitmap16 = new CORE::ProcessedBitmap16(
-		new UINT16[m_sizeX16 * m_sizeY16],
-		m_sizeX16,
-		m_sizeY16 );
-
-	for( size_t i = 0; i < m_sizeX16; i++ )
-	{
-		for( size_t j = 0; j < m_sizeY16; j++ )
+		for( size_t j = 0; j < sizeY16; j++ )
 		{
-			if( VALUE16( TABLE2D( m_bitmap16, i, j, m_sizeX16 ) ) < 220 )
+			if( VALUE16( TABLE2D( rawBitmap16, i, j, sizeX16 ) ) >= 128 )
 			{
-				TABLE2D( processedBitmap16->m_bitmap, i, j, m_sizeX16 ) = RGB16( 0, 0, 0 );
+				//TABLE2D( bitmap16, i, j, sizeX16 ) = RGB16( 0, 0, 0 );
+				TABLE2D( bitmap16, i, j, sizeX16 ) = 0x0000;
 			}
 			else
 			{
-				TABLE2D( processedBitmap16->m_bitmap, i, j, m_sizeX16 ) = RGB16( 255, 255, 255 );
+				//TABLE2D( bitmap16, i, j, sizeX16 ) = RGB16( 255, 255, 255 );
+				TABLE2D( bitmap16, i, j, sizeX16 ) = 0xFFFF;
 			}
 		}
 	}
 
-	return processedBitmap16;
-}
-
-/******************************************************************************/
-
-void CORE::ImageAnalysis::releaseBitmap16()
-{
-	if( m_bitmap16 != NULL )
-	{
-		//delete [] m_bitmap16;
-		m_bitmap16 = NULL;
-	}
-	m_sizeX16 = 0;
-	m_sizeY16 = 0;
-
-	return;
-}
-
-/******************************************************************************/
-
-bool CORE::ImageAnalysis::isBitmap16Valid()
-{
-	if( m_bitmap16 != NULL && m_sizeX16 > 0 && m_sizeY16 > 0 )
-	{
-		return true;
-	}
-
-	return false;
+	return PBitmap16( new Bitmap16( PInnerBitmap16( bitmap16 ), sizeX16, sizeY16 ) );
 }
 
 /******************************************************************************/
