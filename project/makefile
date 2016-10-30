@@ -15,4 +15,4 @@ clean:
 	 $(MAKE) -C app/src/main_linux clean
 	 
 run:
-	/bin/bash -c "echo; time app/src/main_linux/main $(COUNT)" > wyniki_$(COUNT).txt
+	/bin/bash -c "echo; time app/src/main_linux/main $(count) $(cyclic)" > wyniki_$(count).txt

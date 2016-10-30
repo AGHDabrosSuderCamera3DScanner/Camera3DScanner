@@ -32,7 +32,7 @@ PBitmap16 CORE::ImageAnalysis::processBitmap16( PBitmap16& pBitmap )
 	{
 		for( size_t j = 0; j < sizeY16; j++ )
 		{
-			if( VALUE16( TABLE2D( rawBitmap16, i, j, sizeX16 ) ) >= 128 )
+			if( VALUE16( TABLE2D( rawBitmap16, i, j, sizeX16 ) ) >= 200 )
 			{
 				//TABLE2D( bitmap16, i, j, sizeX16 ) = RGB16( 0, 0, 0 );
 				TABLE2D( bitmap16, i, j, sizeX16 ) = 0x0000;

@@ -53,13 +53,15 @@
 #define TABLE3D(T,x,y,z,sY,sZ)  T[ (x) * (sY) * (sZ) + (y) * (sZ) + (z) ]
 
 #define PI              3.14159265359
-#define SIZE            64LL                // size of mesh ( SIZE x SIZE x SIZE )
+#define SIZE            128LL                // size of mesh ( SIZE x SIZE x SIZE )
 #define L               ( SIZE * 5 )        // distance from camera to screen
 #define CAMERA_ANGLE    ( 0.22268202868 )   // camera angle of vision
-#define MIN_COS         0.0000001
+//#define MIN_COS         0.0000001
 #define SIZE_2          ( SIZE / 2 )
 #define D               ( L - SIZE )          // distance from camera to object cube
 #define SHIFT(q)        ( (q) - ( SIZE_2 ) )
+
+#define NUM_THREADS		4	// number of threads to use for processing
 
 #endif // DEFINES_HPP
 

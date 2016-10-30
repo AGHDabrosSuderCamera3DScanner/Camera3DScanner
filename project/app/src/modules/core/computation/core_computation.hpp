@@ -2,6 +2,9 @@
 #define CORE_COMPUTATION_HPP
 
 #include "common.hpp"
+#include "mutex"
+
+extern std::mutex g_cubeMutex[NUM_THREADS];
 
 namespace CORE
 {

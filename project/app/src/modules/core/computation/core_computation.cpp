@@ -1,5 +1,6 @@
 #include "core_computation.hpp"
 #include <cmath>
+#include <cstring>
 
 /******************************************************************************/
 
@@ -71,6 +72,8 @@ COMMON::STATUS CORE::Computation::Compute16( COMMON::PBitmap16& pBitmap16, doubl
     #define a ( D )
 
     int x0, y0, x, y, z;
+    UINT8 tempValues[SIZE][SIZE];
+    memset( tempValues, 0, SIZE * SIZE * SIZEOF(UINT8) );
 
     for( x = 0; x < SIZE; x++ )
     {
@@ -82,33 +85,42 @@ COMMON::STATUS CORE::Computation::Compute16( COMMON::PBitmap16& pBitmap16, doubl
             {
                 for( y = 0; y < SIZE; y++ )
                 {
-                    //if( TABLE3D( cube, x, y, z, SIZE, SIZE ) > 0 )
-                    {
-                        //y0 = ( L * SHIFT( y ) ) / ( D + z ); // bez kąta
-                        #define result ( ( SIZE_2 - static_cast<double>(z) ) * COS( beta ) + ( SHIFT( x ) ) * SIN( beta ) + SIZE_2 )
+                    //y0 = ( L * SHIFT( y ) ) / ( D + z ); // bez kąta
+                    #define result ( ( SIZE_2 - static_cast<double>(z) ) * COS( beta ) + ( SHIFT( x ) ) * SIN( beta ) + SIZE_2 )
 
-                        y0 = ( ( SHIFT( y ) ) * static_cast<double>(L) / ( L - result ) ) * SIZE / SCREEN + SIZE_2;
-                        if( y0 < SIZE && y0 >= 0 )
+                    y0 = ( ( SHIFT( y ) ) * static_cast<double>(L) / ( L - result ) ) * SIZE / SCREEN + SIZE_2;
+                    if( y0 < SIZE && y0 >= 0 )
+                    {
+                        if( TABLE2D( bitmap, x0, y0, SIZE ) == 0 )
                         {
-                            if( TABLE2D( bitmap, x0, y0, SIZE ) == 0 )
-                            {
-                                TABLE3D( cube, x, y, z, SIZE, SIZE ) += 1;
-                            }
-                            else // point does not belong to object
-                            {
-                                //DEBUG("fail")
-                                //TABLE3D( cube, x, y, z, SIZE, SIZE ) = 0;
-                                 //DEBUG_INT( VALUE16( TABLE2D( processedBitmap16->m_bitmap, x0, y0, SIZE ) ) )
-                            }
+                            tempValues[y][z] = 1;
+                            //TABLE3D( cube, x, y, z, SIZE, SIZE ) += 1;
                         }
-                        else // "invalid" point computation
+                        else // point does not belong to object
                         {
-                            //DEBUG( std::string( std::to_string( x0 ) + " : " + std::to_string( y0 ) ).c_str() );
+                            //DEBUG("fail")
+                            //TABLE3D( cube, x, y, z, SIZE, SIZE ) = 0;
+                            //DEBUG_INT( VALUE16( TABLE2D( processedBitmap16->m_bitmap, x0, y0, SIZE ) ) )
                         }
-                    } // if
+                    }
+                    else // "invalid" point computation
+                    {
+                        //DEBUG( std::string( std::to_string( x0 ) + " : " + std::to_string( y0 ) ).c_str() );
+                    }
                 } // for
             } // if
         } // for
+        
+        g_cubeMutex[ NUM_THREADS * x / SIZE ].lock();
+        for( y = 0; y < SIZE; y++ )
+        {
+            for( z = 0; z < SIZE; z++)
+            {
+                TABLE3D( cube, x, y, z, SIZE, SIZE ) += tempValues[y][z];
+                tempValues[y][z] = 0;
+            }
+        }
+        g_cubeMutex[ NUM_THREADS * x / SIZE ].unlock();
     } // for
 
     return COMMON::STATUS::OK;
