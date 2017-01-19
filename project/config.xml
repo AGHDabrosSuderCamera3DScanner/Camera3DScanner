@@ -1,0 +1,38 @@
+<CloudComputing>
+	<INPUT_PATH>./../resources/input</INPUT_PATH>
+	<OUTPUT_FILE>./../resources/output/result.txt</OUTPUT_FILE>
+	<SIZE>240</SIZE>
+	<COUNT>32</COUNT>
+	<CYCLIC_LOAD>TRUE</CYCLIC_LOAD>
+	<DISTANCE>624</DISTANCE>
+	<CAMERA_ANGLE>0.379977</CAMERA_ANGLE>
+	<MIN_BACKGROUND_VALUE>160</MIN_BACKGROUND_VALUE>
+	<NUM_THREADS>4</NUM_THREADS>
+</CloudComputing>
+
+<!--
+    INPUT_PATH - path to folder containing input bitmaps
+
+    OUTPUT_FILE - full path to output file that will be created/opened;
+                  note that each directory on the path must already exist
+
+    SIZE - height of input bitmaps; 
+           also size of output cube (SIZE x SIZE x SIZE)
+
+    COUNT - number of bitmaps provided
+            (bitmaps should be named: "1.bmp", "2.bmp", "3.bmp", ...)
+
+    CYCLIC_LOAD - if TRUE, only first bitmap ("1.bmp") is loaded
+                  and passed COUNT times to program
+
+    DISTANCE - distance from camera to background (which should be placed
+               right behind object being scanned);
+
+    CAMERA_ANGLE - camera angle of vision (in radians)
+
+    MIN_BACKGROUND_VALUE - minimal value of background pixel
+                           ( value = max(red, green, blue) );
+                           range = 0-255
+
+    NUM_THREADS - number of threads to use for processing
+-->
